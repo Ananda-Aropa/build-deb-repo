@@ -1,0 +1,172 @@
+name: 'Build DEB repo'
+description: |
+  Build a DEB repository for the specified packages
+inputs:
+  label:
+    desctiption: |
+      Project name
+    required: true
+  origin:
+    desctiption: |
+      Project origin name or domain name
+    required: false
+    default: ${{ inputs.label }}
+  codename:
+    desctiption: |
+      Project target distro codename
+    required: true
+    default: unstable
+  architectures:
+    desctiption: |
+      List of architectures of packages
+    required: true
+    default: |
+      source
+      amd64
+  components:
+    desctiption: |
+      Repository components
+    required: true
+    default: main
+  description:
+    desctiption: |
+      Repository description
+    required: true
+    default: ""
+  gpg_signing_key:
+    description: |
+      The GPG key to use for signing the package in the repo
+    required: false
+  maintainer:
+    description: |
+      The maintainer of the packages signed with gpg_signing_key
+    required: false
+  from_metadatas:
+    description: |
+      List of package metadata to include in the repository
+    required: true
+  from_deb_packages:
+    description: |
+      List of DEB packages to include in the repository
+    required: true
+    default: ""
+outputs:
+  placeholder:
+    description: ""
+    value: true
+runs:
+  using: "composite"
+  steps:
+    - name: Generate distributions file
+      env:
+        GPG_SIGNING_KEY: ${{ inputs.gpg_signing_key }}
+        MAINTAINER: ${{ inputs.maintainer }}
+      run: |
+        mkdir -p dist/conf
+        echo 'Origin: ${{ inputs.origin }}' >>dist/conf/distributions
+        echo 'Label: ${{ inputs.label }}' >>dist/conf/distributions
+        echo 'Codename: ${{ inputs.codename }}' >>dist/conf/distributions
+        echo 'Architectures: ${{ inputs.architectures }}' >>dist/conf/distributions
+        echo 'Components: ${{ inputs.components }}' >>dist/conf/distributions
+        echo 'Description: ${{ inputs.description }}' >>dist/conf/distributions
+        if [ "$GPG_SIGNING_KEY" ]; then
+          echo "$GPG_SIGNING_KEY" | gpg --import
+          echo "DEBEMAIL='$(echo $DEB_MAINTAINER | awk -F '<' '{print $2}' | awk -F '>' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          echo "DEBFULLNAME='$(echo $DEB_MAINTAINER | awk -F '<' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          source "$GITHUB_OUTPUT"
+          KEY_FINGERPRINT=$(gpg --list-secret-key --with-subkey-fingerprint | grep -A3 "$MAINTAINER" | tail -1)
+          echo "SignWith: $KEY_FINGERPRINT" >>dist/conf/distributions
+        fi
+      shell: bash
+
+    - name: Copy source scripts
+      run: |
+        cp -r ${{ github.action_path }}/repo-download.sh ${{ github.action_path }}/debsign.sh .
+      shell: bash
+
+    - name: Getting need packages
+      run: |
+      apt update && apt -y upgrade
+      apt install -y aria2 reprepro
+
+    - name: Generate repo artifact
+      env:
+        METADATA_LINKS: ${{ inputs.from_metadatas }}
+        DEB_LINKS: ${{ inputs.from_deb_packages }}
+        RELEASE: ${{ inputs.codename }}
+      run: |
+        ./repo-download.sh
+
+    - name: Set Dockerfile distro
+      run: sed -ir 's/^FROM +*$/FROM ${{ inputs.distro }}/gi' ${{ github.action_path }}/Dockerfile
+      shell: bash
+
+    - name: Generate debian package info
+      if: ${{ inputs.package_name != '' && inputs.package_version != '' }}
+      env:
+        DEB_MAINTAINER: ${{ inputs.package_maintainer }}
+        DEB_GENERATE_ORIG: ${{ inputs.package_generate_orig }}
+      run: |
+        apt install -y debhelper
+        
+        if [ "$DEB_GENERATE_ORIG" == true ]; then
+          ARG_GEN_ORIG=-n
+        fi
+
+        if [ "$DEB_MAINTAINER" ]; then
+          echo "DEBEMAIL='$(echo $DEB_MAINTAINER | awk -F '<' '{print $2}' | awk -F '>' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          echo "DEBFULLNAME='$(echo $DEB_MAINTAINER | awk -F '<' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          source "$GITHUB_OUTPUT"
+        fi
+
+        dh_make -y -d \
+          -p ${{ inputs.package_name }}_${{ inputs.package_version }} \
+          -C ${{ inputs.package_class }} \
+          ${DEBEMAIL:+ -e $DEBEMAIL} \
+          $ARG_GEN_ORIG
+      shell: bash
+
+    - name: Set up environment
+      run: |
+        echo "DEB_ARCH='${{ inputs.arch }}'" >>"$GITHUB_OUTPUT"
+        echo "DEB_BUILD_ARGS='${{ inputs.build_arguments }}'" >>"$GITHUB_OUTPUT"
+        echo "DEB_BUILD_OPTIONS='${{ inputs.build_options }}'" >>"$GITHUB_OUTPUT"
+        echo "DEB_BUILD_PROFILES='${{ inputs.build_profiles }}'" >>"$GITHUB_OUTPUT"
+        echo "GPG_SECRET='${{ inputs.gpg_signing_key }}'" >>"$GITHUB_OUTPUT"
+        cp "$GITHUB_OUTPUT" .env
+      shell: bash
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        cp ${{ github.action_path }}/action_build.sh .
+        docker buildx create --use --name debian-deb --buildkitd-flags '--allow-insecure-entitlement security.insecure'
+        docker buildx build --builder debian-deb -f ${{ github.action_path }}/Dockerfile -t debian --allow security.insecure --output type=tar,dest=build.tar .
+      shell: bash
+
+    - name: Export build files
+      run: |
+        mkdir build
+        sudo tar -C build -psxf build.tar
+        mv build/*.{deb,buildinfo,changes} .
+      shell: bash
+
+    - name: Generate metadata.yml
+      env:
+        DEB_ARCH: ${{ inputs.arch }}
+      run: |
+        ${{ github.action_path }}/action_gen-metadata.sh
+      shell: bash
+
+    - name: Compress build files
+      run: zip -j ${{ outputs.artifact_path }} *.deb *.buildinfo *.changes metadata.yml
+      shell: bash
+
+    - name: Clean up
+      run: sudo rm -rf build build.tar
+      shell: bash

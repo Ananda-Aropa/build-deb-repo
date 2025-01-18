@@ -1,2 +1,2 @@
-# bliss-build-deb-repo
-BlissOS Debian buildiso repo
+# build-deb-repo
+Debian repo

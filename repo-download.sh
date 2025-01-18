@@ -1,7 +1,5 @@
 #!/bin/bash
 
-RELEASE=unstable
-
 # Function to download files using aria2c
 download_with_aria2() {
   echo "Downloading $1 using aria2c..."
@@ -14,24 +12,28 @@ download_with_wget() {
   wget -q "$1"
 }
 
+# Function to download files using curl
+download_with_curl() {
+  echo "Downloading $1 using curl..."
+  curl -LOs "$1"
+}
+
 # avoid command failure
 exit_check() { [ "$1" = 0 ] || exit "$1"; }
 trap 'exit_check $?' EXIT
 
 ARCH=($(grep Architectures dist/conf/distributions | awk -F : '{print $2}'))
 SIGNKEY=$(grep SignWith dist/conf/distributions | awk '{print $2}')
-[ "$SIGNKEY" = "yes" ] && SIGNKEY=
 
-if command -v aria2c &>/dev/null; then
-  DOWNLOAD=download_with_aria2
-else
-  DOWNLOAD=download_with_wget
-fi
+for cmds in aria2c wget curl; do
+  if command -v "$cmds" &>/dev/null; then
+    DOWNLOAD=download_with_$cmds
+    break
+  fi
+done
 export DOWNLOAD
 
-while read -r repo; do
-  url=${repo}/download
-
+for url in $METADATA_LINKS; do
   # Download metadata
   if ! $DOWNLOAD "${url}/metadata.yml"; then
     echo "WARNING: Repository '$repo' does not provide a metadata.yml. Skipping..."
@@ -51,7 +53,10 @@ while read -r repo; do
     $DOWNLOAD "${url}/${base_name}.changes"
 
     # Sign the .changes file
-    ./debsign.sh ${SIGNKEY:+-k "$SIGNKEY"} "${base_name}.changes"
+    if [ "$SIGNKEY" ]; then
+      [ "$SIGNKEY" = "yes" ] && sign_key= || sign_key=$SIGNKEY
+      ./debsign.sh ${SIGNKEY:+-k "$sign_key"} "${base_name}.changes"
+    fi
 
     # Download .deb
     for variant in "${repo_variants[@]}"; do
@@ -61,9 +66,23 @@ while read -r repo; do
   done
 done <repos.lst
 
+mkdir -p indie_debs
+cd indie_debs
+for pkg in $DEB_LINKS; do
+  # Download .deb
+  if ! $DOWNLOAD "$pkg"; then
+    echo "WARNING: Package '$pkg' not found. Skipping..."
+    continue
+  fi
+done
+cd ..
+
 {
   cd dist
   for changes in ../*.changes; do
     reprepro include $RELEASE "$changes"
+  done
+  for deb in ../indie_debs/*.deb; do
+    reprepro includedeb $RELEASE "$deb"
   done
 }
