@@ -23,7 +23,7 @@ exit_check() { [ "$1" = 0 ] || exit "$1"; }
 trap 'exit_check $?' EXIT
 
 ARCH=($(grep Architectures dist/conf/distributions | awk -F : '{print $2}'))
-SIGNKEY=$(grep SignWith dist/conf/distributions | awk '{print $2}')
+SIGNKEY=$(grep SignWith dist/conf/distributions | awk '{print $2}' || :)
 
 for cmds in aria2c wget curl; do
   if command -v "$cmds" &>/dev/null; then
@@ -60,11 +60,10 @@ for url in $METADATA_LINKS; do
 
     # Download .deb
     for variant in "${repo_variants[@]}"; do
-      [ "$variant" = "default" ] && pkgvar= || pkgvar=$variant
-      $DOWNLOAD "${url}/${repo_name}${pkgvar:+-${pkgvar}}_${repo_ver}_${arch}.deb"
+      $DOWNLOAD "${url}/${variant}_${repo_ver}_${arch}.deb"
     done
   done
-done <repos.lst
+done
 
 mkdir -p indie_debs
 cd indie_debs
