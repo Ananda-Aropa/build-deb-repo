@@ -47,7 +47,7 @@ for url in $METADATA_LINKS; do
   rm -f metadata.yml
 
   for arch in "${ARCH[@]}"; do
-    [ "$arch" = source ] && continue
+    [ "$arch" = source ] && arch=all
 
     base_name=${repo_name}_${repo_ver}_${arch}
     $DOWNLOAD "${url}/${base_name}.buildinfo"
