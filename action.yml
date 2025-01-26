@@ -32,6 +32,11 @@ inputs:
       Repository components
     required: true
     default: main
+  udeb_components:
+    desctiption: |
+      Repository UDeb components
+    required: true
+    default: main
   gpg_signing_key:
     description: |
       The GPG key to use for signing the package in the repo
@@ -64,12 +69,15 @@ runs:
         ORIGIN='${{ inputs.origin }}'
         [ ! $ORIGIN ] && ORIGIN='${{ inputs.label }}'
         ARCH=$(echo '${{ inputs.architectures }}' | tr '\n' ' ')
+        COMPONENT=$(echo '${{ inputs.components }}' | tr '\n' ' ')
+        UDEB_COMPONENT=$(echo '${{ inputs.udeb_components }}' | tr '\n' ' ')
         mkdir -p dist/conf
         echo "Origin: $ORIGIN" >>dist/conf/distributions
         echo 'Label: ${{ inputs.label }}' >>dist/conf/distributions
         echo 'Codename: ${{ inputs.codename }}' >>dist/conf/distributions
         echo "Architectures: $ARCH" >>dist/conf/distributions
-        echo 'Components: ${{ inputs.components }}' >>dist/conf/distributions
+        echo "Components: $COMPONENT" >>dist/conf/distributions
+        echo "UDebComponents: $UDEB_COMPONENT" >>dist/conf/distributions
         echo 'Description: ${{ inputs.desc }}' >>dist/conf/distributions
         if [ "$GPG_SIGNING_KEY" ]; then
           echo "$GPG_SIGNING_KEY" | gpg --import
