@@ -78,6 +78,7 @@ runs:
           KEY_FINGERPRINT=$(gpg --list-secret-key --with-subkey-fingerprint | grep -A3 "$MAINTAINER" | tail -1)
           echo "SignWith: $KEY_FINGERPRINT" >>dist/conf/distributions
         fi
+        cat dist/conf/distributions
       shell: bash
 
     - name: Copy source scripts
@@ -95,7 +96,12 @@ runs:
         METADATA_LINKS: ${{ inputs.from_metadatas }}
         DEB_LINKS: ${{ inputs.from_deb_packages }}
         RELEASE: ${{ inputs.codename }}
-      run: ./repo-download.sh
+      run: |
+        echo $METADATA_LINKS
+        echo $DEB_LINKS
+        echo $RELEASE
+        export METADATA_LINKS DEB_LINKS RELEASE
+        ./repo-download.sh
       shell: bash
 
     - name: Compress build files

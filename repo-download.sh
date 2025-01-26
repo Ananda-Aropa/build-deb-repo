@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Function to download files using aria2c
-download_with_aria2() {
+download_with_aria2c() {
   echo "Downloading $1 using aria2c..."
   aria2c -x 16 -s 16 -q "$1"
 }
@@ -36,7 +36,7 @@ export DOWNLOAD
 for url in $METADATA_LINKS; do
   # Download metadata
   if ! $DOWNLOAD "${url}/metadata.yml"; then
-    echo "WARNING: Repository '$repo' does not provide a metadata.yml. Skipping..."
+    echo "WARNING: Repository '$url' does not provide a metadata.yml. Skipping..."
     continue
   fi
 
