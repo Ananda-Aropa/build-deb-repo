@@ -81,13 +81,13 @@ runs:
       shell: bash
 
     - name: Copy source scripts
-      run: cp -r ${{ github.action_path }}/repo-download.sh ${{ github.action_path }}/debsign.sh .
+      run: cp -r ${{ github.action_path }}/{repo-download,debsign}.sh .
       shell: bash
 
     - name: Getting need packages
       run: |
-        apt update && apt -y upgrade
-        apt install -y aria2 reprepro gnupg2
+        sudo apt update && sudo apt -y upgrade
+        sudo apt install -y aria2 reprepro gnupg2
       shell: bash
 
     - name: Generate repo artifact
