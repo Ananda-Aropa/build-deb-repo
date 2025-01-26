@@ -91,5 +91,5 @@ cd ..
     for deb in ../indie_debs/*.deb; do
       reprepro includedeb $RELEASE "$deb"
     done
-  }
+  } || :
 }
