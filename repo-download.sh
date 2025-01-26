@@ -81,7 +81,9 @@ cd ..
   for changes in ../*.changes; do
     reprepro include $RELEASE "$changes"
   done
-  for deb in ../indie_debs/*.deb; do
-    reprepro includedeb $RELEASE "$deb"
-  done
+  ls ../indie_debs/*.deb && {
+    for deb in ../indie_debs/*.deb; do
+      reprepro includedeb $RELEASE "$deb"
+    done
+  }
 }
