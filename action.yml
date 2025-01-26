@@ -10,7 +10,6 @@ inputs:
     desctiption: |
       Project origin name or domain name
     required: false
-    default: ${{ inputs.label }}
   desc:
     desctiption: |
       Repository description
@@ -62,8 +61,10 @@ runs:
         GPG_SIGNING_KEY: ${{ inputs.gpg_signing_key }}
         MAINTAINER: ${{ inputs.maintainer }}
       run: |
+        ORIGIN='${{ inputs.origin }}'
+        [ ! $ORIGIN ] && ORIGIN='${{ inputs.label }}'
         mkdir -p dist/conf
-        echo 'Origin: ${{ inputs.origin }}' >>dist/conf/distributions
+        echo "Origin: $ORIGIN" >>dist/conf/distributions
         echo 'Label: ${{ inputs.label }}' >>dist/conf/distributions
         echo 'Codename: ${{ inputs.codename }}' >>dist/conf/distributions
         echo 'Architectures: ${{ inputs.architectures }}' >>dist/conf/distributions
