@@ -43,6 +43,7 @@ for url in $METADATA_LINKS; do
   repo_name=$(grep Name metadata.yml | awk '{print $2}')
   repo_ver=$(grep Version metadata.yml | awk '{print $2}')
   repo_variants=($(grep Variants metadata.yml | awk -F : '{print $2}'))
+  repo_uvariants=($(grep UdebVariants metadata.yml | awk -F : '{print $2}'))
   rm -f metadata.yml
 
   for arch in "${ARCH[@]}"; do
@@ -61,6 +62,11 @@ for url in $METADATA_LINKS; do
     # Download .deb
     for variant in "${repo_variants[@]}"; do
       $DOWNLOAD "${url}/${variant}_${repo_ver}_${arch}.deb"
+    done
+
+    # Download .udeb
+    for variant in "${repo_uvariants[@]}"; do
+      $DOWNLOAD "${url}/${variant}_${repo_ver}_${arch}.udeb"
     done
   done
 done
