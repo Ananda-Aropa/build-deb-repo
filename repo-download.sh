@@ -62,6 +62,8 @@ for url in $METADATA_LINKS; do
     # Download .deb
     for variant in "${repo_variants[@]}"; do
       $DOWNLOAD "${url}/${variant}_${repo_ver}_${arch}.deb"
+      # Also download debug symbol if available
+      $DOWNLOAD "${url}/${variant}-dbgsym_${repo_ver}_${arch}.deb"
     done
 
     # Download .udeb
