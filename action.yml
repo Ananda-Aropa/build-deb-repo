@@ -80,13 +80,14 @@ runs:
         echo "UDebComponents: $UDEB_COMPONENT" >>dist/conf/distributions
         echo 'Description: ${{ inputs.desc }}' >>dist/conf/distributions
         if [ "$GPG_SIGNING_KEY" ]; then
-          echo "$GPG_SIGNING_KEY" | gpg --import
-          echo $MAINTAINER
-          echo "DEBEMAIL='$(echo $DEB_MAINTAINER | awk -F '<' '{print $2}' | awk -F '>' '{print $1}')'" >>"$GITHUB_OUTPUT"
-          echo "DEBFULLNAME='$(echo $DEB_MAINTAINER | awk -F '<' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          KEY_OWNER=$(echo "$GPG_SIGNING_KEY" | gpg --import | grep -i ': public key "' | awk -F '"' '{print $2}')
+          if [ ! "$MAINTAINER" ]; then
+            MAINTAINER=$KEY_OWNER
+          fi
+          echo "DEBEMAIL='$(echo $MAINTAINER | awk -F '<' '{print $2}' | awk -F '>' '{print $1}')'" >>"$GITHUB_OUTPUT"
+          echo "DEBFULLNAME='$(echo $MAINTAINER | awk -F '<' '{print $1}')'" >>"$GITHUB_OUTPUT"
           source "$GITHUB_OUTPUT"
-          KEY_FINGERPRINT=$(gpg --list-secret-key --with-subkey-fingerprint | grep -A3 "$MAINTAINER" | tail -1)
-          echo $KEY_FINGERPRINT
+          KEY_FINGERPRINT=$(gpg --list-secret-key --with-subkey-fingerprint | grep -A3 "$MAINTAINER" | tail -2)
           echo "SignWith: $KEY_FINGERPRINT" >>dist/conf/distributions
         fi
         cat dist/conf/distributions
