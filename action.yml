@@ -81,10 +81,12 @@ runs:
         echo 'Description: ${{ inputs.desc }}' >>dist/conf/distributions
         if [ "$GPG_SIGNING_KEY" ]; then
           echo "$GPG_SIGNING_KEY" | gpg --import
+          echo $MAINTAINER
           echo "DEBEMAIL='$(echo $DEB_MAINTAINER | awk -F '<' '{print $2}' | awk -F '>' '{print $1}')'" >>"$GITHUB_OUTPUT"
           echo "DEBFULLNAME='$(echo $DEB_MAINTAINER | awk -F '<' '{print $1}')'" >>"$GITHUB_OUTPUT"
           source "$GITHUB_OUTPUT"
           KEY_FINGERPRINT=$(gpg --list-secret-key --with-subkey-fingerprint | grep -A3 "$MAINTAINER" | tail -1)
+          echo $KEY_FINGERPRINT
           echo "SignWith: $KEY_FINGERPRINT" >>dist/conf/distributions
         fi
         cat dist/conf/distributions
