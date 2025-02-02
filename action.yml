@@ -80,7 +80,7 @@ runs:
         echo "UDebComponents: $UDEB_COMPONENT" >>dist/conf/distributions
         echo 'Description: ${{ inputs.desc }}' >>dist/conf/distributions
         if [ "$GPG_SIGNING_KEY" ]; then
-          KEY_OWNER=$(echo "$GPG_SIGNING_KEY" | gpg --import | grep -i ': public key "' | awk -F '"' '{print $2}')
+          KEY_OWNER=$(echo "$GPG_SIGNING_KEY" | gpg --import 2>&1 | grep -i ': public key "' | awk -F '"' '{print $2}')
           if [ ! "$MAINTAINER" ]; then
             MAINTAINER=$KEY_OWNER
           fi
