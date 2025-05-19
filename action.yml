@@ -54,6 +54,16 @@ inputs:
       List of DEB packages to include in the repository
     required: true
     default: ""
+  max_download_retries:
+    description: |
+      Maximum amount of attempts to retry downloading target file
+    required: true
+    default: 5
+  download_retry_wait:
+    description: |
+      Time to wait before each retry attempts
+    required: true
+    default: 10
 outputs:
   placeholder:
     description: ""
@@ -108,11 +118,14 @@ runs:
         METADATA_LINKS: ${{ inputs.from_metadatas }}
         DEB_LINKS: ${{ inputs.from_deb_packages }}
         RELEASE: ${{ inputs.codename }}
+        MAX_RETRIES: ${{ inputs.max_download_retries }}
+        RETRY_WAIT: ${{ inputs.download_retry_wait }}
       run: |
         echo $METADATA_LINKS
         echo $DEB_LINKS
         echo $RELEASE
-        export METADATA_LINKS DEB_LINKS RELEASE
+        echo $MAX_RETRIES $RETRY_WAIT
+        export METADATA_LINKS DEB_LINKS RELEASE MAX_RETRIES RETRY_WAIT
         ./repo-download.sh
       shell: bash
 

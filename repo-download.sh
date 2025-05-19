@@ -1,22 +1,24 @@
 #!/bin/bash
 
-LOG=log.txt
+LOG=$(pwd)/log.txt
+
+touch $LOG
 
 # Function to download files using aria2c
 download_with_aria2c() {
-  aria2c -x 16 -s 16 "$1" >/dev/null 2>$LOG &&
+  aria2c -x 16 -s 16 --max-tries=$MAX_RETRIES --retry-wait=$RETRY_WAIT "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using aria2c..."
 }
 
 # Function to download files using wget
 download_with_wget() {
-  wget "$1" >/dev/null 2>$LOG &&
+  wget -c --tries=$MAX_RETRIES "$1" --waitretry=$RETRY_WAIT >/dev/null 2>$LOG &&
     echo "Downloaded $1 using wget..."
 }
 
 # Function to download files using curl
 download_with_curl() {
-  curl -LO "$1" >/dev/null 2>$LOG &&
+  curl --retry $MAX_RETRIES --retry-delay $RETRY_WAIT -LO "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using curl..."
 }
 
