@@ -4,19 +4,19 @@ LOG=log.txt
 
 # Function to download files using aria2c
 download_with_aria2c() {
-  aria2c -x 16 -s 16 -q "$1" >/dev/null 2>$LOG &&
+  aria2c -x 16 -s 16 "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using aria2c..."
 }
 
 # Function to download files using wget
 download_with_wget() {
-  wget -q "$1" >/dev/null 2>$LOG &&
+  wget "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using wget..."
 }
 
 # Function to download files using curl
 download_with_curl() {
-  curl -LOs "$1" >/dev/null 2>$LOG &&
+  curl -LO "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using curl..."
 }
 
