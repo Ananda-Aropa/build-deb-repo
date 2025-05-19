@@ -110,7 +110,7 @@ runs:
     - name: Getting need packages
       run: |
         sudo apt update && sudo apt -y upgrade
-        sudo apt install -y aria2 reprepro gnupg2
+        sudo apt install -y wget reprepro gnupg2
       shell: bash
 
     - name: Generate repo artifact
