@@ -1,20 +1,22 @@
 #!/bin/bash
 
+LOG=log.txt
+
 # Function to download files using aria2c
 download_with_aria2c() {
-  aria2c -x 16 -s 16 -q "$1" &&
+  aria2c -x 16 -s 16 -q "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using aria2c..."
 }
 
 # Function to download files using wget
 download_with_wget() {
-  wget -q "$1" &&
+  wget -q "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using wget..."
 }
 
 # Function to download files using curl
 download_with_curl() {
-  curl -LOs "$1" &&
+  curl -LOs "$1" >/dev/null 2>$LOG &&
     echo "Downloaded $1 using curl..."
 }
 
@@ -84,14 +86,18 @@ for pkg in $DEB_LINKS; do
 done
 cd ..
 
+find . -type f -iname '*.deb' >$LOG 
+
 {
   cd dist
   for changes in ../*.changes; do
     reprepro include $RELEASE "$changes"
   done
-  ls ../indie_debs/*.deb && {
+  ls ../indie_debs/*.deb 2>/dev/null && {
     for deb in ../indie_debs/*.deb; do
       reprepro includedeb $RELEASE "$deb"
     done
   } || :
 }
+
+cat $LOG
