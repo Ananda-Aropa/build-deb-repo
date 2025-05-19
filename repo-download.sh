@@ -2,20 +2,20 @@
 
 # Function to download files using aria2c
 download_with_aria2c() {
-  echo "Downloading $1 using aria2c..."
-  aria2c -x 16 -s 16 -q "$1"
+  aria2c -x 16 -s 16 -q "$1" &&
+    echo "Downloaded $1 using aria2c..."
 }
 
 # Function to download files using wget
 download_with_wget() {
-  echo "Downloading $1 using wget..."
-  wget -q "$1"
+  wget -q "$1" &&
+    echo "Downloaded $1 using wget..."
 }
 
 # Function to download files using curl
 download_with_curl() {
-  echo "Downloading $1 using curl..."
-  curl -LOs "$1"
+  curl -LOs "$1" &&
+    echo "Downloaded $1 using curl..."
 }
 
 # avoid command failure
