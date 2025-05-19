@@ -29,13 +29,15 @@ trap 'exit_check $?' EXIT
 ARCH=($(grep Architectures dist/conf/distributions | awk -F : '{print $2}'))
 SIGNKEY=$(grep SignWith dist/conf/distributions | awk '{print $2}' || :)
 
-for cmds in aria2c wget curl; do
-  if command -v "$cmds" &>/dev/null; then
-    DOWNLOAD=download_with_$cmds
-    break
-  fi
-done
-export DOWNLOAD
+if [ -z "$DL" ]; then
+  for cmds in aria2c wget curl; do
+    if command -v "$cmds" &>/dev/null; then
+      DL=$cmds
+      break
+    fi
+  done
+fi
+export DOWNLOAD="download_with_$DL"
 
 for url in $METADATA_LINKS; do
   # Download metadata

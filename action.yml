@@ -54,6 +54,11 @@ inputs:
       List of DEB packages to include in the repository
     required: true
     default: ""
+  downloader:
+    description: |
+      Downloader to download packages (aria2c, curl, wget)
+    required: true
+    default: wget
   max_download_retries:
     description: |
       Maximum amount of attempts to retry downloading target file
@@ -110,7 +115,7 @@ runs:
     - name: Getting need packages
       run: |
         sudo apt update && sudo apt -y upgrade
-        sudo apt install -y wget reprepro gnupg2
+        sudo apt install -y aria2 wget reprepro gnupg2
       shell: bash
 
     - name: Generate repo artifact
@@ -120,11 +125,12 @@ runs:
         RELEASE: ${{ inputs.codename }}
         MAX_RETRIES: ${{ inputs.max_download_retries }}
         RETRY_WAIT: ${{ inputs.download_retry_wait }}
+        DL: ${{ inputs.downloader }}
       run: |
         echo $METADATA_LINKS
         echo $DEB_LINKS
         echo $RELEASE
-        echo $MAX_RETRIES $RETRY_WAIT
+        echo $DL $MAX_RETRIES $RETRY_WAIT
         export METADATA_LINKS DEB_LINKS RELEASE MAX_RETRIES RETRY_WAIT
         ./repo-download.sh
       shell: bash
