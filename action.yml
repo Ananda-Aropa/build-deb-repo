@@ -1,39 +1,39 @@
-name: 'Build DEB repo'
+name: 'aaropa_builder_repo'
 description: |
   Build a DEB repository for the specified packages
 inputs:
   label:
-    desctiption: |
+    description: |
       Project name
     required: true
   origin:
-    desctiption: |
+    description: |
       Project origin name or domain name
     required: false
   desc:
-    desctiption: |
+    description: |
       Repository description
     required: true
     default: ""
   codename:
-    desctiption: |
+    description: |
       Project target distro codename
     required: true
     default: unstable
   architectures:
-    desctiption: |
+    description: |
       List of architectures of packages
     required: true
     default: |
       source
       amd64
   components:
-    desctiption: |
+    description: |
       Repository components
     required: true
     default: main
   udeb_components:
-    desctiption: |
+    description: |
       Repository UDeb components
     required: true
     default: main
@@ -63,16 +63,16 @@ inputs:
     description: |
       Maximum amount of attempts to retry downloading target file
     required: true
-    default: 5
+    default: "5"
   download_retry_wait:
     description: |
       Time to wait before each retry attempts
     required: true
-    default: 10
+    default: "10"
 outputs:
   placeholder:
     description: ""
-    value: true
+    value: "dist.zip"
 runs:
   using: "composite"
   steps:
@@ -133,6 +133,13 @@ runs:
         echo $DL $MAX_RETRIES $RETRY_WAIT
         export METADATA_LINKS DEB_LINKS RELEASE MAX_RETRIES RETRY_WAIT
         ./repo-download.sh
+      shell: bash
+
+    - name: Generate entry file
+      env:
+        REPO: ${{ github.repository }}
+      run: |
+        ./build-entry.sh
       shell: bash
 
     - name: Compress build files
