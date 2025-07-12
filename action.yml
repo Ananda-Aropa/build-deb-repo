@@ -109,7 +109,7 @@ runs:
       shell: bash
 
     - name: Copy source scripts
-      run: cp -r ${{ github.action_path }}/{repo-download,debsign}.sh .
+      run: cp -r ${{ github.action_path }}/{repo-download,debsign,build-entry}.sh .
       shell: bash
 
     - name: Getting need packages
