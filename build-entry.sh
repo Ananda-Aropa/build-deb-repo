@@ -52,9 +52,10 @@ cat <<EOF >>dist/index.html
 			<ol>
 				<li>Adding the repository to your sources list:</li>
 				<pre><code>echo "deb [trusted=yes] $PAGE_URL unstable main" | sudo tee /etc/apt/sources.list.d/aaropa-repo.list</code></pre>
-				<li>Run <code>sudo apt update</code></li>
 				<li>Install keyring package:</li>
 				<pre><code>wget -q $PAGE_URL/$(find dist -type f -iname "aaropa-keyring_*.deb" -print -quit | sed 's|dist/||') -O aaropa-keyring.deb<br/>sudo dpkg -i aaropa-keyring.deb</code></pre>
+				<li>Update repositories:</li>
+				<pre><code>sudo apt update</code></pre>
 				<li>Install packages from this repository:</li>
 				<pre><code>sudo apt install &lt;package-name&gt;</code></pre>
 			</ol>
