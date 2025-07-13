@@ -23,7 +23,7 @@ download_with_aria2c() {
 		aria2c_opts+=("--header" "$header")
 	done
 	aria2c -x 8 -s 8 --max-tries=$MAX_RETRIES --retry-wait=$RETRY_WAIT "${aria2c_opts[@]}" $out "$target" 2>>$LOG &&
-		echo "Downloaded $1 using aria2c..."
+		echo "Downloaded $target using aria2c..."
 }
 
 # Function to download files using wget
@@ -64,7 +64,7 @@ download_with_curl() {
 	done
 	# Use curl to download the file
 	curl --retry $MAX_RETRIES --retry-delay $RETRY_WAIT "${curl_opts[@]}" -L $out "$target" 2>>$LOG &&
-		echo "Downloaded $1 using curl..."
+		echo "Downloaded $target using curl..."
 }
 
 # avoid command failure
