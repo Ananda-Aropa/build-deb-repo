@@ -49,6 +49,11 @@ inputs:
     description: |
       List of package metadata to include in the repository
     required: true
+  from_github_actions:
+    description: |
+      List of GitHub Actions generated metadata artifacts to include in the repository (format: owner/repo<@ref><:workflow_id>)
+    required: true
+    default: ""
   from_deb_packages:
     description: |
       List of DEB packages to include in the repository
@@ -69,6 +74,16 @@ inputs:
       Time to wait before each retry attempts
     required: true
     default: "10"
+  github_token:
+    description: |
+      GitHub token to use for authentication
+    required: true
+    default: ${{ secrets.GITHUB_TOKEN }}
+  github_username:
+    description: |
+      GitHub username to use for authentication
+    required: true
+    default: ${{ github.actor }}
 outputs:
   placeholder:
     description: ""
@@ -121,13 +136,17 @@ runs:
     - name: Generate repo artifact
       env:
         METADATA_LINKS: ${{ inputs.from_metadatas }}
+        ACTION_LINKS: ${{ inputs.from_github_actions }}
         DEB_LINKS: ${{ inputs.from_deb_packages }}
         RELEASE: ${{ inputs.codename }}
         MAX_RETRIES: ${{ inputs.max_download_retries }}
         RETRY_WAIT: ${{ inputs.download_retry_wait }}
         DL: ${{ inputs.downloader }}
+        USERNAME: ${{ inputs.github_username }}
+        TOKEN: ${{ inputs.github_token }}
       run: |
         echo $METADATA_LINKS
+        echo $ACTION_LINKS
         echo $DEB_LINKS
         echo $RELEASE
         echo $DL $MAX_RETRIES $RETRY_WAIT
