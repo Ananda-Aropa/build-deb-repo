@@ -40,7 +40,7 @@ download_with_wget() {
 		# Add headers to wget options
 		wget_opts+=("--header" "$header")
 	done
-	wget -q -c --tries=$MAX_RETRIES --waitretry=$RETRY_WAIT "${wget_opts[@]}" $out "$target" 2>>$LOG &&
+	wget -c --tries=$MAX_RETRIES --waitretry=$RETRY_WAIT "${wget_opts[@]}" $out "$target" 2>>$LOG &&
 		echo "Downloaded $target using wget..."
 }
 
@@ -63,7 +63,7 @@ download_with_curl() {
 		curl_opts+=("-H" "$header")
 	done
 	# Use curl to download the file
-	curl -s --retry $MAX_RETRIES --retry-delay $RETRY_WAIT "${curl_opts[@]}" -L $out "$target" 2>>$LOG &&
+	curl --retry $MAX_RETRIES --retry-delay $RETRY_WAIT "${curl_opts[@]}" -L $out "$target" 2>>$LOG &&
 		echo "Downloaded $1 using curl..."
 }
 
@@ -171,6 +171,7 @@ for repo in $ACTION_LINKS; do
 		../debsign.sh ${SIGNKEY:+-k "$sign_key"} *.changes
 	fi
 	cd ..
+	cp -r "$dir"/. .
 done
 
 mkdir -p indie_debs
