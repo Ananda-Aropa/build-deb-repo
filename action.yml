@@ -78,12 +78,12 @@ inputs:
     description: |
       GitHub token to use for authentication
     required: true
-    default: ${{ secrets.GITHUB_TOKEN }}
+    default: "<GITHUB_TOKEN>"
   github_username:
     description: |
       GitHub username to use for authentication
     required: true
-    default: ${{ github.actor }}
+    default: "<GITHUB_USERNAME>"
 outputs:
   placeholder:
     description: ""
