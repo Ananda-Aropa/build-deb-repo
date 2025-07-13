@@ -150,7 +150,7 @@ runs:
         echo $DEB_LINKS
         echo $RELEASE
         echo $DL $MAX_RETRIES $RETRY_WAIT
-        export METADATA_LINKS DEB_LINKS RELEASE MAX_RETRIES RETRY_WAIT
+        export METADATA_LINKS ACTION_LINKS DEB_LINKS RELEASE MAX_RETRIES RETRY_WAIT
         ./repo-download.sh
       shell: bash
 

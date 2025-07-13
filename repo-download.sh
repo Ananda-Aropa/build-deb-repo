@@ -1,7 +1,7 @@
 #!/bin/bash
 
 LOG=$(pwd)/log.txt
-
+rm -f $LOG
 touch $LOG
 
 # Download functions take first argument as the target URL
@@ -10,7 +10,7 @@ touch $LOG
 
 # Function to download files using aria2c
 download_with_aria2c() {
-	local target=$1 out aria2c_opts="" header
+	local target=$1 out aria2c_opts=() header
 	shift
 	if [ "$#" -gt 0 ]; then
 		out="-o $1"
@@ -20,15 +20,15 @@ download_with_aria2c() {
 	fi
 	for header in "$@"; do
 		# Add headers to aria2c options
-		aria2c_opts="$aria2c_opts --header='$header' "
+		aria2c_opts+=("--header" "$header")
 	done
-	aria2c -x 8 -s 8 --max-tries=$MAX_RETRIES --retry-wait=$RETRY_WAIT $aria2c_opts $out "$target" >$LOG 2>&1 &&
+	aria2c -x 8 -s 8 --max-tries=$MAX_RETRIES --retry-wait=$RETRY_WAIT "${aria2c_opts[@]}" $out "$target" 2>>$LOG &&
 		echo "Downloaded $1 using aria2c..."
 }
 
 # Function to download files using wget
 download_with_wget() {
-	local target=$1 out wget_opts="" header
+	local target=$1 out wget_opts=() header
 	shift
 	if [ "$#" -gt 0 ]; then
 		out="-O $1"
@@ -38,15 +38,15 @@ download_with_wget() {
 	fi
 	for header in "$@"; do
 		# Add headers to wget options
-		wget_opts="$wget_opts --header='$header' "
+		wget_opts+=("--header" "$header")
 	done
-	wget -c --tries=$MAX_RETRIES --waitretry=$RETRY_WAIT $wget_opts $out "$target" >$LOG 2>&1 &&
+	wget -q -c --tries=$MAX_RETRIES --waitretry=$RETRY_WAIT "${wget_opts[@]}" $out "$target" 2>>$LOG &&
 		echo "Downloaded $target using wget..."
 }
 
 # Function to download files using curl
 download_with_curl() {
-	local target=$1 out curl_opts="" header
+	local target=$1 out curl_opts=() header
 	shift
 	if [ "$#" -gt 0 ]; then
 		if [ "$1" == - ]; then
@@ -60,10 +60,10 @@ download_with_curl() {
 	fi
 	for header in "$@"; do
 		# Add headers to curl options
-		curl_opts="$curl_opts -H '$header' "
+		curl_opts+=("-H" "$header")
 	done
 	# Use curl to download the file
-	curl --retry $MAX_RETRIES --retry-delay $RETRY_WAIT $curl_opts -L $out "$target" >$LOG 2>&1 &&
+	curl -s --retry $MAX_RETRIES --retry-delay $RETRY_WAIT "${curl_opts[@]}" -L $out "$target" 2>>$LOG &&
 		echo "Downloaded $1 using curl..."
 }
 
@@ -129,7 +129,7 @@ GITHUB_HEADERS=(
 	"Authorization: Bearer $TOKEN"
 	"X-GitHub-Api-Version: 2022-11-28"
 )
-GITHUB_API="https://api.github.com/repos/"
+GITHUB_API="https://api.github.com/repos"
 for repo in $ACTION_LINKS; do
 	OWNER=$(echo "$repo" | cut -d '/' -f 1)
 	REPO=$(echo "$repo" | cut -d '/' -f 2 | cut -d '@' -f 1)
@@ -148,7 +148,7 @@ for repo in $ACTION_LINKS; do
 	latest_artifact_download_url=$(echo "$latest_artifact_info" | jq -r '.artifacts[0].archive_download_url')
 
 	if [ -z "$latest_artifact_download_url" ]; then
-		echo "WARNING: No artifacts found for workflow '$WORKFLOW' in repository '$repo'. Skipping..." >$LOG
+		echo "WARNING: No artifacts found for workflow '$WORKFLOW' in repository '$repo'. Skipping..." >>$LOG
 		continue
 	fi
 
@@ -156,17 +156,21 @@ for repo in $ACTION_LINKS; do
 	$DOWNLOAD "$latest_artifact_download_url" artifact.zip "${GITHUB_HEADERS[@]}"
 
 	# Unzip the artifact
-	unzip -o artifact.zip -d . >$LOG 2>&1 || {
-		echo "ERROR: Failed to unzip artifact for repository '$repo'. Skipping..." >$LOG
+	dir=${OWNER}_${REPO}
+	mkdir -p "$dir"
+	unzip -o artifact.zip -d "$dir" 2>>$LOG || {
+		echo "ERROR: Failed to unzip artifact for repository '$repo'. Skipping..." >>$LOG
 		continue
 	}
 	rm -f artifact.zip
 
 	# Sign the .changes file
+	cd "$dir"
 	if [ "$SIGNKEY" ]; then
 		[ "$SIGNKEY" = "yes" ] && sign_key= || sign_key=$SIGNKEY
-		./debsign.sh ${SIGNKEY:+-k "$sign_key"} *.changes
+		../debsign.sh ${SIGNKEY:+-k "$sign_key"} *.changes
 	fi
+	cd ..
 done
 
 mkdir -p indie_debs
@@ -180,7 +184,7 @@ for pkg in $DEB_LINKS; do
 done
 cd ..
 
-find . -type f -iname '*.deb' >$LOG
+find . -type f -iname '*.deb' >>$LOG
 
 {
 	cd dist
